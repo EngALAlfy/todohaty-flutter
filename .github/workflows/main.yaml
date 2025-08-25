@@ -1,93 +1,48 @@
-name: "Build Development Debug version"
+name: Flutter Build and Release
 
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:
+      - master
+  workflow_dispatch: # manual trigger
 
 jobs:
   build:
-    name: Build a Debug
     runs-on: ubuntu-latest
 
     steps:
-      #1 Checkout Repository
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      #2 Setup Java
-      - name: Set Up Java
-        uses: actions/setup-java@v3.12.0
-        with:
-          distribution: 'oracle'
-          java-version: '17'
-
-      #3 Setup Flutter
-      - name: Set Up Flutter
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.4'
-          channel: 'stable'
+          flutter-version: '3.32.8' # or your preferred version
 
-      #4 Check Flutter version
-      - name: Check Flutter version
-        run: flutter --version
-
-      #5 Clean The project
-      - name: Clean The project
-        run: flutter clean
-
-      #6 Install Dependencies
-      - name: Install Dependencies
+      - name: Install dependencies
         run: flutter pub get
 
-      #8 Build APK
-      - name: Build APK
+      - name: Build Debug APK
         run: flutter build apk --debug
 
-      #9 Extract Version
-      - name: Extract version from pubspec.yaml
-        id: extract_version
-        run: |
-          version=$(grep '^version: ' pubspec.yaml | cut -d ' ' -f 2 | tr -d '\r')
-          echo "VERSION=$version" >> $GITHUB_ENV
+      - name: Build Release APK
+        run: flutter build apk --release
 
-      #10 Check if Tag Exists
-      - name: Check if Tag Exists
-        id: check_tag
-        run: |
-          if git rev-parse "v${{ env.VERSION }}" >/dev/null 2>&1; then
-            echo "TAG_EXISTS=true" >> $GITHUB_ENV
-          else
-            echo "TAG_EXISTS=false" >> $GITHUB_ENV
-          fi
+      - name: Build App Bundle (AAB)
+        run: flutter build appbundle
 
-      #11 Modify Tag if it Exists
-      - name: Modify Tag
-        if: env.TAG_EXISTS == 'true'
-        id: modify_tag
-        run: |
-          new_version="${{ env.VERSION }}-build-${{ github.run_number }}"
-          echo "VERSION=$new_version" >> $GITHUB_ENV
+      - name: Get short commit SHA
+        id: vars
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
-      #12 Rename APK file
-      - name: Rename APK file
-        run: |
-          mv build/app/outputs/flutter-apk/app-debug.apk build/app/outputs/flutter-apk/${{ github.event.repository.name }}-${{ env.VERSION }}-debug.apk
-
-      #13 Upload Artifacts
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: Releases
-          path: |
-            build/app/outputs/flutter-apk/${{ github.event.repository.name }}-${{ env.VERSION }}-debug.apk
-
-      #15 Create Release
-      - name: Create Release
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: "build/app/outputs/flutter-apk/${{ github.event.repository.name }}-${{ env.VERSION }}-debug.apk"
-          tag: v${{ env.VERSION }}
-          token: ${{ secrets.TOKEN }}
+          name: "Build ${{ env.SHORT_SHA }}"
+          tag_name: "build-${{ env.SHORT_SHA }}"
+          files: |
+            build/app/outputs/flutter-apk/app-debug.apk
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
