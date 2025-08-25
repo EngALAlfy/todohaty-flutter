@@ -1,4 +1,4 @@
-package com.example.doable_todo_list_app
+package com.alalfy.todo
 
 import io.flutter.embedding.android.FlutterActivity
 
