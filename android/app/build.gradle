@@ -25,8 +25,8 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
-val keystoreProperties = new Properties()
-val keystorePropertiesFile = rootProject.file("key.properties")
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
@@ -70,10 +70,6 @@ android {
     }
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now,
-            // so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
             signingConfig = signingConfigs.getByName("release")
         }
     }
