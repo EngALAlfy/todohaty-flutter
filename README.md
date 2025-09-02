@@ -48,3 +48,6 @@ The LoadTaskFailure, AddTaskFailure, and UpdateTaskFailure states provide detail
 
 ### Unit Test
 Unit test has been integrated to test all functionalities from initial state to creating new task, updating task and deleting task
+
+
+<!-- Security scan triggered at 2025-09-02 04:26:20 -->
